@@ -72,8 +72,8 @@ export default function Page() {
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '1.5rem 1rem 4rem' }}>
 
       <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Biodata Rombel 3</h1>
-        <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: 2 }}>Mata Pelajaran PPKN</p>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Biodata Rombel 3 - Hafiz Rafi Uddin (Dosen)</h1>
+        <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: 2 }}>Mata Pelajaran Organisasi & Kepemimpinan PPKN</p>
       </div>
 
       {toast && (
