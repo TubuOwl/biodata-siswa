@@ -18,6 +18,7 @@ export default function Page() {
   const [toast, setToast]       = useState('')
   const [search, setSearch]     = useState('')
   const [form, setForm]         = useState({ nama: '', nim: '', whatsapp: '' })
+  const [lightbox, setLightbox] = useState<string | null>(null)
 
   useEffect(() => { load() }, [])
 
@@ -56,8 +57,8 @@ export default function Page() {
   }
 
   async function hapus(id: number, nama: string) {
-    if (!confirm(`Hapus ${nama}?`)) return
-    await fetch(`/api/siswa/${id}`, { method: 'DELETE' })
+    if (!confirm('Hapus ' + nama + '?')) return
+    await fetch('/api/siswa/' + id, { method: 'DELETE' })
     notify('Data dihapus')
     load()
   }
@@ -70,56 +71,64 @@ export default function Page() {
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '1.5rem 1rem 4rem' }}>
 
-      {/* Header */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 700 }}>📋 Biodata Rombel 3</h1>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Biodata Rombel 3</h1>
         <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: 2 }}>Mata Pelajaran PPKN</p>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', top: 16, right: 16, zIndex: 99,
+          position: 'fixed', top: 16, right: 16, zIndex: 999,
           background: '#1e293b', color: '#fff',
           padding: '0.6rem 1rem', borderRadius: 8,
           fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         }}>{toast}</div>
       )}
 
-      {/* Toolbar */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{
+          position: 'fixed', inset: 0, zIndex: 998,
+          background: 'rgba(0,0,0,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'zoom-out',
+        }}>
+          <img src={lightbox} alt="Foto siswa" style={{
+            maxWidth: '90vw', maxHeight: '90vh',
+            borderRadius: 12, objectFit: 'contain',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }} />
+          <button onClick={() => setLightbox(null)} style={{
+            position: 'fixed', top: 16, right: 16,
+            background: 'rgba(255,255,255,0.2)', border: 'none',
+            color: '#fff', width: 36, height: 36,
+            borderRadius: '50%', fontSize: '1rem', cursor: 'pointer',
+          }}>X</button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-        <input
-          type="text"
-          placeholder="Cari nama / NIM..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+        <input type="text" placeholder="Cari nama / NIM..."
+          value={search} onChange={e => setSearch(e.target.value)}
           style={{
-            flex: 1, minWidth: 180,
-            padding: '0.5rem 0.75rem',
-            border: '1px solid #cbd5e1',
-            borderRadius: 6, fontSize: '0.88rem',
-            background: '#fff', outline: 'none',
+            flex: 1, minWidth: 180, padding: '0.5rem 0.75rem',
+            border: '1px solid #cbd5e1', borderRadius: 6,
+            fontSize: '0.88rem', background: '#fff', outline: 'none',
           }}
         />
-        <button
-          onClick={() => setShowForm(!showForm)}
-          style={{
-            padding: '0.5rem 1rem',
-            background: showForm ? '#64748b' : '#2563eb',
-            color: '#fff', border: 'none',
-            borderRadius: 6, fontWeight: 600, fontSize: '0.85rem',
-          }}
-        >
-          {showForm ? '✕ Batal' : '+ Tambah'}
+        <button onClick={() => setShowForm(!showForm)} style={{
+          padding: '0.5rem 1rem',
+          background: showForm ? '#64748b' : '#2563eb',
+          color: '#fff', border: 'none',
+          borderRadius: 6, fontWeight: 600, fontSize: '0.85rem',
+        }}>
+          {showForm ? 'X Batal' : '+ Tambah'}
         </button>
       </div>
 
-      {/* Form Tambah */}
       {showForm && (
         <div style={{
           background: '#fff', border: '1px solid #e2e8f0',
-          borderRadius: 10, padding: '1rem',
-          marginBottom: '1rem',
+          borderRadius: 10, padding: '1rem', marginBottom: '1rem',
         }}>
           <form onSubmit={tambah} style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <Field label="Nama Lengkap" placeholder="Contoh: Budi Santoso"
@@ -138,12 +147,10 @@ export default function Page() {
         </div>
       )}
 
-      {/* Info jumlah */}
       <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.75rem' }}>
-        {loading ? 'Memuat...' : `${filtered.length} siswa`}
+        {loading ? 'Memuat...' : filtered.length + ' siswa'}
       </p>
 
-      {/* List */}
       {loading ? (
         <p style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem' }}>Memuat data...</p>
       ) : filtered.length === 0 ? (
@@ -157,6 +164,7 @@ export default function Page() {
             <KartuSiswa key={s.id} siswa={s} no={i + 1}
               onHapus={() => hapus(s.id, s.nama)}
               onRefresh={load}
+              onLihatFoto={() => s.foto_url && setLightbox(s.foto_url)}
             />
           ))}
         </div>
@@ -165,12 +173,11 @@ export default function Page() {
   )
 }
 
-/* ── Kartu Siswa ── */
-function KartuSiswa({ siswa, no, onHapus, onRefresh }: {
+function KartuSiswa({ siswa, no, onHapus, onRefresh, onLihatFoto }: {
   siswa: Siswa; no: number
-  onHapus: () => void; onRefresh: () => void
+  onHapus: () => void; onRefresh: () => void; onLihatFoto: () => void
 }) {
-  const fileRef   = useRef<HTMLInputElement>(null)
+  const fileRef    = useRef<HTMLInputElement>(null)
   const [up, setUp] = useState(false)
 
   async function uploadFoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -192,35 +199,46 @@ function KartuSiswa({ siswa, no, onHapus, onRefresh }: {
       background: '#fff', border: '1px solid #e2e8f0',
       borderRadius: 10, padding: '0.75rem',
     }}>
-      {/* Nomor */}
       <span style={{ fontSize: '0.75rem', color: '#94a3b8', minWidth: 18, textAlign: 'right' }}>
         {no}
       </span>
 
-      {/* Foto */}
-      <div
-        onClick={() => fileRef.current?.click()}
-        title="Klik untuk upload/ganti foto"
-        style={{
-          width: 60, height: 60, borderRadius: 8, flexShrink: 0,
-          border: '1px solid #e2e8f0', background: '#f8fafc',
-          overflow: 'hidden', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        {up ? (
-          <span style={{ fontSize: '1.1rem' }}>⏳</span>
-        ) : siswa.foto_url ? (
-          <img src={siswa.foto_url} alt={siswa.nama}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <span style={{ fontSize: '1.5rem' }}>👤</span>
-        )}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+        <div
+          onClick={siswa.foto_url ? onLihatFoto : undefined}
+          title={siswa.foto_url ? 'Klik untuk lihat foto' : 'Belum ada foto'}
+          style={{
+            width: 100, height: 100, borderRadius: 10,
+            border: '1px solid #e2e8f0', background: '#f8fafc',
+            overflow: 'hidden',
+            cursor: siswa.foto_url ? 'zoom-in' : 'default',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          {up ? (
+            <span style={{ fontSize: '1.4rem' }}>⏳</span>
+          ) : siswa.foto_url ? (
+            <img src={siswa.foto_url} alt={siswa.nama}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ fontSize: '2.2rem' }}>👤</span>
+          )}
+        </div>
+
+        <button
+          onClick={() => fileRef.current?.click()}
+          style={{
+            fontSize: '0.68rem', padding: '2px 8px',
+            background: '#f1f5f9', border: '1px solid #cbd5e1',
+            borderRadius: 4, color: '#475569', cursor: 'pointer',
+          }}
+        >
+          📷 {siswa.foto_url ? 'Ganti' : 'Upload'}
+        </button>
         <input ref={fileRef} type="file" accept="image/*"
           style={{ display: 'none' }} onChange={uploadFoto} />
       </div>
 
-      {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontWeight: 600, fontSize: '0.92rem', marginBottom: 2,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -229,11 +247,7 @@ function KartuSiswa({ siswa, no, onHapus, onRefresh }: {
         <p style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 5 }}>
           NIM: {siswa.nim}
         </p>
-        {/* WA link */}
-        <a
-          href={`https://wa.me/${siswa.whatsapp}`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <a href={'https://wa.me/' + siswa.whatsapp} target="_blank" rel="noopener noreferrer"
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
             background: '#25D366', color: '#fff',
@@ -245,18 +259,17 @@ function KartuSiswa({ siswa, no, onHapus, onRefresh }: {
         </a>
       </div>
 
-      {/* Hapus */}
       <button onClick={onHapus} title="Hapus" style={{
         background: 'none', border: '1px solid #fca5a5',
         borderRadius: 6, color: '#ef4444',
         width: 30, height: 30, fontSize: '0.85rem', flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>✕</button>
+        cursor: 'pointer',
+      }}>X</button>
     </div>
   )
 }
 
-/* ── Helper Components ── */
 function Field({ label, placeholder, value, onChange }: {
   label: string; placeholder: string; value: string; onChange: (v: string) => void
 }) {
@@ -265,8 +278,7 @@ function Field({ label, placeholder, value, onChange }: {
       <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>
         {label}
       </label>
-      <input
-        type="text" placeholder={placeholder} value={value}
+      <input type="text" placeholder={placeholder} value={value}
         onChange={e => onChange(e.target.value)}
         style={{
           width: '100%', padding: '0.5rem 0.75rem',
@@ -288,9 +300,9 @@ function WaIcon() {
 
 const btnPri: React.CSSProperties = {
   padding: '0.5rem 1.1rem', background: '#2563eb', color: '#fff',
-  border: 'none', borderRadius: 6, fontWeight: 600, fontSize: '0.85rem',
+  border: 'none', borderRadius: 6, fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
 }
 const btnSec: React.CSSProperties = {
   padding: '0.5rem 1.1rem', background: '#f1f5f9', color: '#475569',
-  border: '1px solid #cbd5e1', borderRadius: 6, fontWeight: 600, fontSize: '0.85rem',
+  border: '1px solid #cbd5e1', borderRadius: 6, fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
 }
